@@ -1,0 +1,26 @@
+{
+    "name": "com.dtech.actor-framework",
+    "displayName": "Actor Framework",
+    "version": "1.0.0",
+    "unity": "2022.3",
+    "description": "ECS like framework for creating game systems.",
+    "changelogUrl": "https://github.com/DanilChizhikov/ActorFramework/releases/tag/v1.0.0",
+    "documentationUrl": "https://github.com/DanilChizhikov/ActorFramework/",
+    "keywords": [
+        "actor",
+        "framework",
+        "ecs like",
+        "ecs"
+    ],
+    "author": "DTech",
+    "repository": {
+        "type": "git",
+        "url": "ssh://github.com:DanilChizhikov/ActorFramework.git",
+        "directory": "com.dtech"
+    },
+    "publishConfig": {
+        "registry": "https://npm.pkg.github.com/@DanilChizhikov"
+    },
+    "license": "MIT",
+    "readme": "README.md"
+}
