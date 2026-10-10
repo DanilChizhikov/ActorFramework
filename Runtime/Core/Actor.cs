@@ -109,19 +109,15 @@ namespace DTech.ActorFramework
 			return _activation != null && _activation.ContainsActivator(token);
 		}
 
+		/// <summary>
+		/// Drives activity only for actors built with ActorBuilder.StartInactive; on a default-active actor the
+		/// token is just recorded. Deactivators always win.
+		/// </summary>
 		public void AddActivator<TToken>(TToken token)
 			where TToken : class
 		{
 			_ = token ?? throw new ArgumentNullException(nameof(token));
 			ThrowIfNotAlive();
-
-			if (_isDefaultActive)
-			{
-				throw new InvalidOperationException(
-					$"Actor '{_id}' is active by default and only accepts deactivators. " +
-					$"Build it with {nameof(ActorBuilder)}.{nameof(ActorBuilder.StartInactive)} to drive it by activators.");
-			}
-
 			EnsureActivationState().AddActivator(token);
 		}
 
@@ -190,7 +186,11 @@ namespace DTech.ActorFramework
 			SetActive(_isDefaultActive);
 		}
 
-		internal void SetDefaultInactive() => _isDefaultActive = false;
+		internal void SetDefaultInactive()
+		{
+			_isDefaultActive = false;
+			_activation?.SetDefaultInactive();
+		}
 
 		internal void IncrementFeatureCount() => _featureCount++;
 

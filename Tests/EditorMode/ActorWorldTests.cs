@@ -209,5 +209,46 @@ namespace DTech.ActorFramework.Tests.EditorMode
 
 			Assert.Throws<ObjectDisposedException>(() => world.GetPool<Health>());
 		}
+
+		[Test]
+		public void Dispose_WhenDestroyingHandlerAddsFeature_Succeeds()
+		{
+			ActorWorld world = new();
+			world.Initialize();
+			Actor first = world.CreateActor();
+			Actor second = world.CreateActor();
+			world.OnActorDestroying += destroying => destroying.AddFeature<Dead>();
+
+			Assert.DoesNotThrow(() => world.Dispose());
+			Assert.That(first.IsAlive, Is.False);
+			Assert.That(second.IsAlive, Is.False);
+		}
+
+		[Test]
+		public void Dispose_WhenDestroyingHandlerThrows_StillDestroysEveryActor()
+		{
+			ActorWorld world = new();
+			world.Initialize();
+			Actor first = world.CreateActor();
+			Actor second = world.CreateActor();
+			world.OnActorDestroying += destroying => throw new InvalidOperationException("Handler failure.");
+
+			Assert.Throws<InvalidOperationException>(() => world.Dispose());
+			Assert.That(first.IsAlive, Is.False);
+			Assert.That(second.IsAlive, Is.False);
+			Assert.That(world.IsDisposed, Is.True);
+		}
+
+		[Test]
+		public void Update_ReenteredFromSystem_Throws()
+		{
+			ActorWorld world = new();
+			world.AddSystem(new ReentrantUpdateSystem());
+			world.Initialize();
+
+			Assert.Throws<InvalidOperationException>(() => world.Update(1f));
+
+			world.Dispose();
+		}
 	}
 }

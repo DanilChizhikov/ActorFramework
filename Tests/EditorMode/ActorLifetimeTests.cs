@@ -187,5 +187,20 @@ namespace DTech.ActorFramework.Tests.EditorMode
 
 			other.Dispose();
 		}
+
+		[Test]
+		public void Destroy_WhenDestroyingHandlerThrows_StillDestroysActor()
+		{
+			Actor actor = _world.CreateActor();
+			actor.AddFeature<Health>();
+			Action<Actor> handler = destroying => throw new InvalidOperationException("Handler failure.");
+			_world.OnActorDestroying += handler;
+
+			Assert.Throws<InvalidOperationException>(() => actor.Destroy());
+			Assert.That(actor.IsAlive, Is.False);
+			Assert.That(_world.ActorCount, Is.EqualTo(0));
+
+			_world.OnActorDestroying -= handler;
+		}
 	}
 }

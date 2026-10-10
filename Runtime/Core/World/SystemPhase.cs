@@ -43,6 +43,12 @@ namespace DTech.ActorFramework
 
 		public void Run(Action<TSystem, float> invoke, float deltaTime, StructuralChangeQueue structural)
 		{
+			if (_cursor != NOT_RUNNING)
+			{
+				throw new InvalidOperationException(
+					$"Systems of '{typeof(TSystem).Name}' are already running. An update phase cannot be re-entered.");
+			}
+
 			_end = _systems.Count;
 			try
 			{

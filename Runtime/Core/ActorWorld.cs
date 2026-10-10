@@ -1,4 +1,5 @@
 using System;
+using System.Runtime.ExceptionServices;
 
 namespace DTech.ActorFramework
 {
@@ -358,6 +359,7 @@ namespace DTech.ActorFramework
 
 		private void DestroyAllActors()
 		{
+			ExceptionDispatchInfo firstException = null;
 			_structural.Begin();
 			try
 			{
@@ -368,13 +370,22 @@ namespace DTech.ActorFramework
 						continue;
 					}
 
-					DestroyActorCore(actor);
+					try
+					{
+						DestroyActorCore(actor);
+					}
+					catch (Exception exception)
+					{
+						firstException ??= ExceptionDispatchInfo.Capture(exception);
+					}
 				}
 			}
 			finally
 			{
 				_structural.End();
 			}
+
+			firstException?.Throw();
 		}
 
 		private bool DestroyActorCore(Actor actor)
@@ -387,10 +398,16 @@ namespace DTech.ActorFramework
 			_structural.Begin();
 			try
 			{
-				OnActorDestroying?.Invoke(actor);
-				actor.MarkDestroyed();
-				actor.ResetActivation();
-				_structural.EnqueueDestroy(actor.Id);
+				try
+				{
+					OnActorDestroying?.Invoke(actor);
+				}
+				finally
+				{
+					actor.MarkDestroyed();
+					actor.ResetActivation();
+					_structural.EnqueueDestroy(actor.Id);
+				}
 			}
 			finally
 			{

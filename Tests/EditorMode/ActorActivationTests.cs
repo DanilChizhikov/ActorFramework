@@ -31,11 +31,35 @@ namespace DTech.ActorFramework.Tests.EditorMode
 		}
 
 		[Test]
-		public void AddActivator_OnDefaultActiveActor_Throws()
+		public void AddActivator_OnDefaultActiveActor_RecordsTokenWithoutChangingActivity()
+		{
+			Actor actor = _world.CreateActor();
+			int activatedCount = 0;
+			int deactivatedCount = 0;
+			actor.OnActivated += activated => activatedCount++;
+			actor.OnDeactivated += deactivated => deactivatedCount++;
+
+			Assert.DoesNotThrow(() => actor.AddActivator(_tokenA));
+			Assert.That(actor.IsActive, Is.True);
+			Assert.That(actor.ActivatorCount, Is.EqualTo(1));
+			Assert.That(actor.ContainsActivator(_tokenA), Is.True);
+
+			actor.RemoveActivator(_tokenA);
+
+			Assert.That(actor.IsActive, Is.True, "Removing the last activator must not deactivate a default-active actor.");
+			Assert.That(activatedCount, Is.EqualTo(0));
+			Assert.That(deactivatedCount, Is.EqualTo(0));
+		}
+
+		[Test]
+		public void AddActivator_OnDefaultActiveActor_DoesNotOverrideDeactivator()
 		{
 			Actor actor = _world.CreateActor();
 
-			Assert.Throws<InvalidOperationException>(() => actor.AddActivator(_tokenA));
+			actor.AddActivator(_tokenA);
+			actor.AddDeactivator(_tokenB);
+
+			Assert.That(actor.IsActive, Is.False);
 		}
 
 		[Test]
@@ -191,6 +215,25 @@ namespace DTech.ActorFramework.Tests.EditorMode
 			builder.Build();
 
 			Assert.Throws<InvalidOperationException>(() => builder.StartInactive());
+		}
+
+		[Test]
+		public void StartInactive_AfterDeactivatorOnUnbuiltActor_ActivatorsDriveActor()
+		{
+			ActorBuilder builder = _world.BuildActor();
+			builder.Actor.AddDeactivator(_tokenA);
+
+			Actor actor = builder.StartInactive().Build();
+
+			Assert.That(actor.IsActive, Is.False);
+
+			actor.RemoveDeactivator(_tokenA);
+
+			Assert.That(actor.IsActive, Is.False, "An inactive-by-default actor needs an activator to run.");
+
+			actor.AddActivator(_tokenB);
+
+			Assert.That(actor.IsActive, Is.True);
 		}
 	}
 }
