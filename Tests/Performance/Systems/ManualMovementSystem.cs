@@ -16,7 +16,13 @@ namespace DTech.ActorFramework.Tests.Performance
 		{
 			for (int i = Query.Count - 1; i >= 0; i--)
 			{
-				int actorId = Query.GetActorAt(i).Id;
+				Actor actor = Query.GetActorAt(i);
+				if (!Query.IsMatching(actor))
+				{
+					continue;
+				}
+
+				int actorId = actor.Id;
 				ref Position position = ref _positions.GetUnchecked(actorId);
 				ref Velocity velocity = ref _velocities.GetUnchecked(actorId);
 				position.X += velocity.X * deltaTime;

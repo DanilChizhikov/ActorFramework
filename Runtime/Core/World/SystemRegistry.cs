@@ -1,15 +1,23 @@
 using System;
 using System.Collections.Generic;
+using System.Runtime.ExceptionServices;
 
 namespace DTech.ActorFramework
 {
 	internal sealed class SystemRegistry
 	{
+		private static readonly Action<IUpdateSystem, float> _invokeUpdate =
+			(system, deltaTime) => system.Update(deltaTime);
+		private static readonly Action<IFixedUpdateSystem, float> _invokeFixedUpdate =
+			(system, fixedDeltaTime) => system.FixedUpdate(fixedDeltaTime);
+		private static readonly Action<ILateUpdateSystem, float> _invokeLateUpdate =
+			(system, deltaTime) => system.LateUpdate(deltaTime);
+
 		private readonly StructuralChangeQueue _structural;
 		private readonly List<IActorSystem> _systems = new();
-		private readonly List<IUpdateSystem> _updateSystems = new();
-		private readonly List<IFixedUpdateSystem> _fixedUpdateSystems = new();
-		private readonly List<ILateUpdateSystem> _lateUpdateSystems = new();
+		private readonly SystemPhase<IUpdateSystem> _updateSystems = new();
+		private readonly SystemPhase<IFixedUpdateSystem> _fixedUpdateSystems = new();
+		private readonly SystemPhase<ILateUpdateSystem> _lateUpdateSystems = new();
 
 		public int Count => _systems.Count;
 
@@ -78,66 +86,32 @@ namespace DTech.ActorFramework
 
 		public void DisposeAll()
 		{
+			ExceptionDispatchInfo firstException = null;
 			for (int i = _systems.Count - 1; i >= 0; i--)
 			{
-				_systems[i].Dispose();
+				try
+				{
+					_systems[i].Dispose();
+				}
+				catch (Exception exception)
+				{
+					firstException ??= ExceptionDispatchInfo.Capture(exception);
+				}
 			}
 
 			_systems.Clear();
 			_updateSystems.Clear();
 			_fixedUpdateSystems.Clear();
 			_lateUpdateSystems.Clear();
+
+			firstException?.Throw();
 		}
 
-		public void Update(float deltaTime)
-		{
-			for (int i = 0; i < _updateSystems.Count; i++)
-			{
-				IUpdateSystem system = _updateSystems[i];
-				_structural.Begin();
-				try
-				{
-					system.Update(deltaTime);
-				}
-				finally
-				{
-					_structural.End();
-				}
-			}
-		}
+		public void Update(float deltaTime) => _updateSystems.Run(_invokeUpdate, deltaTime, _structural);
 
-		public void FixedUpdate(float fixedDeltaTime)
-		{
-			for (int i = 0; i < _fixedUpdateSystems.Count; i++)
-			{
-				IFixedUpdateSystem system = _fixedUpdateSystems[i];
-				_structural.Begin();
-				try
-				{
-					system.FixedUpdate(fixedDeltaTime);
-				}
-				finally
-				{
-					_structural.End();
-				}
-			}
-		}
+		public void FixedUpdate(float fixedDeltaTime) =>
+			_fixedUpdateSystems.Run(_invokeFixedUpdate, fixedDeltaTime, _structural);
 
-		public void LateUpdate(float deltaTime)
-		{
-			for (int i = 0; i < _lateUpdateSystems.Count; i++)
-			{
-				ILateUpdateSystem system = _lateUpdateSystems[i];
-				_structural.Begin();
-				try
-				{
-					system.LateUpdate(deltaTime);
-				}
-				finally
-				{
-					_structural.End();
-				}
-			}
-		}
+		public void LateUpdate(float deltaTime) => _lateUpdateSystems.Run(_invokeLateUpdate, deltaTime, _structural);
 	}
 }

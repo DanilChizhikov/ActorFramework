@@ -17,7 +17,7 @@ namespace DTech.ActorFramework.Tests.EditorMode
 			for (int i = Query.Count - 1; i >= 0; i--)
 			{
 				Actor actor = Query.GetActorAt(i);
-				if (!actor.IsAlive)
+				if (!Query.IsMatching(actor))
 				{
 					continue;
 				}

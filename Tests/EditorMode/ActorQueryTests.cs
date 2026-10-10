@@ -158,5 +158,35 @@ namespace DTech.ActorFramework.Tests.EditorMode
 			Assert.That(count, Is.EqualTo(3));
 			Assert.That(results[0], Is.Not.Null);
 		}
+
+		[Test]
+		public void Contains_StaleActorWithReusedId_ReturnsFalse()
+		{
+			ActorQuery query = _world.CreateQuery().With<Health>().Build();
+			Actor first = _world.CreateActor();
+			first.AddFeature<Health>();
+			first.Destroy();
+
+			Actor second = _world.CreateActor();
+			second.AddFeature<Health>();
+
+			Assert.That(second.Id, Is.EqualTo(first.Id));
+			Assert.That(query.Contains(first), Is.False);
+			Assert.That(query.Contains(second), Is.True);
+		}
+
+		[Test]
+		public void IncludeInactiveQuery_DoesNotSeeUnbuiltActor()
+		{
+			ActorBuilder builder = _world.BuildActor().With(new Health());
+
+			ActorQuery query = _world.CreateQuery().With<Health>().IncludeInactive().Build();
+
+			Assert.That(query.Count, Is.EqualTo(0));
+
+			builder.Build();
+
+			Assert.That(query.Count, Is.EqualTo(1));
+		}
 	}
 }

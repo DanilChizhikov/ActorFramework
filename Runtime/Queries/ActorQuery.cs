@@ -64,8 +64,26 @@ namespace DTech.ActorFramework
 			_ = actor ?? throw new ArgumentNullException(nameof(actor));
 
 			int actorId = actor.Id;
+			if (actorId < 0 || actorId >= _sparse.Length)
+			{
+				return false;
+			}
 
-			return actorId >= 0 && actorId < _sparse.Length && _sparse[actorId] != NONE;
+			int index = _sparse[actorId];
+
+			return index != NONE && ReferenceEquals(_actors[index], actor);
+		}
+
+		/// <summary>
+		/// Whether an actor taken from this query still belongs in it. Membership is synced only when a
+		/// structural scope ends, so inside a system an actor stays listed after it is destroyed, deactivated
+		/// or loses a required feature. Cheap while the actor is unchanged since the last sync.
+		/// </summary>
+		public bool IsMatching(Actor actor)
+		{
+			_ = actor ?? throw new ArgumentNullException(nameof(actor));
+
+			return actor.IsAlive && (!actor.IsQueryDirty || Matches(actor));
 		}
 
 		internal void Sync(Actor actor)
@@ -118,7 +136,7 @@ namespace DTech.ActorFramework
 
 		private bool Matches(Actor actor)
 		{
-			if (!actor.IsAlive)
+			if (!actor.IsAlive || !actor.IsArmed)
 			{
 				return false;
 			}

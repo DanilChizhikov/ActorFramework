@@ -11,6 +11,8 @@ namespace DTech.ActorFramework
 		private readonly ActorRegistry _actors;
 		private readonly QueryRegistry _queries;
 
+		public bool IsInScope => _depth > 0;
+
 		private int[] _dirtyActorIds = new int[DEFAULT_CAPACITY];
 		private int[] _dirtyScratch = new int[DEFAULT_CAPACITY];
 		private int[] _pendingDestroyIds = new int[DEFAULT_CAPACITY];
@@ -126,14 +128,25 @@ namespace DTech.ActorFramework
 			Array.Copy(_pendingDestroyIds, _pendingDestroyScratch, count);
 			_pendingDestroyCount = 0;
 
-			for (int i = 0; i < count; i++)
+			int index = 0;
+			try
 			{
-				if (!_actors.TryGet(_pendingDestroyScratch[i], out Actor actor))
+				for (; index < count; index++)
 				{
-					continue;
-				}
+					if (!_actors.TryGet(_pendingDestroyScratch[index], out Actor actor))
+					{
+						continue;
+					}
 
-				_world.TeardownActor(actor);
+					_world.TeardownActor(actor);
+				}
+			}
+			finally
+			{
+				for (int i = index + 1; i < count; i++)
+				{
+					EnqueueDestroy(_pendingDestroyScratch[i]);
+				}
 			}
 		}
 

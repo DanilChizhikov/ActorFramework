@@ -25,6 +25,17 @@ namespace DTech.ActorFramework
 			return this;
 		}
 
+		/// <summary>
+		/// The actor stays inactive until it gets an activator, and turns inactive again when the last one is
+		/// removed. Deactivators still veto it.
+		/// </summary>
+		public ActorBuilder StartInactive()
+		{
+			_world.ThrowIfNotBuildable(_actor);
+			_actor.SetDefaultInactive();
+			return this;
+		}
+
 		public Actor Build() => _world.CompleteBuild(_actor);
 	}
 }

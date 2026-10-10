@@ -5,8 +5,8 @@ namespace DTech.ActorFramework
 	/// <summary>
 	/// Manual tier: gives a system its world and its query and gets out of the way. Walk
 	/// ActorQuery or the feature pools directly when you want zero dispatch inside the loop.
-	/// Iterate backwards and skip actors whose Actor.IsAlive is false - a system may destroy
-	/// actors that are still listed in the query it is iterating.
+	/// Iterate backwards and skip actors for which ActorQuery.IsMatching is false - a system may destroy,
+	/// deactivate or strip actors that are still listed in the query it is iterating.
 	/// </summary>
 	public abstract class ActorSystemBase : IActorSystem
 	{

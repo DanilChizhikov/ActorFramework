@@ -48,41 +48,40 @@ namespace DTech.ActorFramework
 				return;
 			}
 
+			if (_structural.IsInScope)
+			{
+				throw new InvalidOperationException(
+					$"{nameof(ActorWorld)} cannot be disposed from inside a system update or a structural event.");
+			}
+
 			_isDisposing = true;
-
-			_systems.DisposeAll();
-
-			_structural.Begin();
 			try
 			{
-				for (int i = 0; i < _actors.Capacity; i++)
+				try
 				{
-					if (!_actors.TryGet(i, out Actor actor))
-					{
-						continue;
-					}
-
-					DestroyActorCore(actor);
+					_systems.DisposeAll();
+				}
+				finally
+				{
+					DestroyAllActors();
 				}
 			}
 			finally
 			{
-				_structural.End();
+				_features.Clear();
+				_queries.Clear();
+				_actors.Clear();
+				_structural.Clear();
+
+				_phase = Phase.Disposed;
+				_isDisposing = false;
+
+				OnActorCreated = null;
+				OnActorDestroying = null;
+				OnActorDestroyed = null;
+				OnFeatureAdded = null;
+				OnFeatureRemoved = null;
 			}
-
-			_features.Clear();
-			_queries.Clear();
-			_actors.Clear();
-			_structural.Clear();
-
-			_phase = Phase.Disposed;
-			_isDisposing = false;
-
-			OnActorCreated = null;
-			OnActorDestroying = null;
-			OnActorDestroyed = null;
-			OnFeatureAdded = null;
-			OnFeatureRemoved = null;
 		}
 
 		/// <summary>
@@ -104,7 +103,7 @@ namespace DTech.ActorFramework
 
 		public Actor CreateActor()
 		{
-			ThrowIfDisposed();
+			ThrowIfNotAcceptingChanges();
 
 			Actor actor = _actors.Create(this);
 
@@ -128,7 +127,7 @@ namespace DTech.ActorFramework
 		/// </summary>
 		public ActorBuilder BuildActor()
 		{
-			ThrowIfDisposed();
+			ThrowIfNotAcceptingChanges();
 
 			return new ActorBuilder(this, _actors.Create(this));
 		}
@@ -161,6 +160,8 @@ namespace DTech.ActorFramework
 		public FeaturePool<TFeature> GetPool<TFeature>()
 			where TFeature : struct, IActorFeature
 		{
+			ThrowIfDisposed();
+
 			return _features.GetPool<TFeature>();
 		}
 
@@ -197,7 +198,7 @@ namespace DTech.ActorFramework
 		public void AddSystem(IActorSystem system)
 		{
 			_ = system ?? throw new ArgumentNullException(nameof(system));
-			ThrowIfDisposed();
+			ThrowIfNotAcceptingChanges();
 
 			_systems.Add(system);
 
@@ -244,6 +245,8 @@ namespace DTech.ActorFramework
 
 		internal Actor CompleteBuild(Actor actor)
 		{
+			ThrowIfNotBuildable(actor);
+
 			FeatureMask snapshot = actor.Mask;
 
 			_structural.Begin();
@@ -278,23 +281,43 @@ namespace DTech.ActorFramework
 			_queries.RemoveActor(actorId);
 
 			FeatureMask snapshot = actor.Mask;
-			for (int typeId = 0; typeId < _features.PoolCapacity; typeId++)
+			try
 			{
-				if (!snapshot.Has(typeId))
+				for (int typeId = 0; typeId < _features.PoolCapacity; typeId++)
 				{
-					continue;
+					if (!snapshot.Has(typeId))
+					{
+						continue;
+					}
+
+					OnFeatureRemoved?.Invoke(actor, typeId);
+				}
+			}
+			finally
+			{
+				for (int typeId = 0; typeId < _features.PoolCapacity; typeId++)
+				{
+					if (!snapshot.Has(typeId))
+					{
+						continue;
+					}
+
+					_features.RemoveFromPool(typeId, actorId);
 				}
 
-				OnFeatureRemoved?.Invoke(actor, typeId);
-				_features.RemoveFromPool(typeId, actorId);
+				actor.ClearMask();
+				_actors.Release(actorId);
 			}
 
-			actor.ClearMask();
-			_actors.Release(actorId);
-
-			actor.RaiseDestroyed();
-			OnActorDestroyed?.Invoke(actor);
-			actor.ClearEvents();
+			try
+			{
+				actor.RaiseDestroyed();
+				OnActorDestroyed?.Invoke(actor);
+			}
+			finally
+			{
+				actor.ClearEvents();
+			}
 		}
 
 		internal void RaiseFeatureAdded(Actor actor, int typeId) => OnFeatureAdded?.Invoke(actor, typeId);
@@ -309,6 +332,49 @@ namespace DTech.ActorFramework
 			}
 
 			throw new ObjectDisposedException(nameof(ActorWorld));
+		}
+
+		internal void ThrowIfNotAcceptingChanges()
+		{
+			if (_phase != Phase.Disposed && !_isDisposing)
+			{
+				return;
+			}
+
+			throw new ObjectDisposedException(nameof(ActorWorld));
+		}
+
+		internal void ThrowIfNotBuildable(Actor actor)
+		{
+			ThrowIfNotAcceptingChanges();
+
+			if (actor.IsAlive && !actor.IsArmed)
+			{
+				return;
+			}
+
+			throw new InvalidOperationException($"Actor '{actor.Id}' is already built or destroyed.");
+		}
+
+		private void DestroyAllActors()
+		{
+			_structural.Begin();
+			try
+			{
+				for (int i = 0; i < _actors.Capacity; i++)
+				{
+					if (!_actors.TryGet(i, out Actor actor))
+					{
+						continue;
+					}
+
+					DestroyActorCore(actor);
+				}
+			}
+			finally
+			{
+				_structural.End();
+			}
 		}
 
 		private bool DestroyActorCore(Actor actor)

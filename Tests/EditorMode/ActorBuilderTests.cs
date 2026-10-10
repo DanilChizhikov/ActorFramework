@@ -94,5 +94,33 @@ namespace DTech.ActorFramework.Tests.EditorMode
 
 			Assert.Throws<System.InvalidOperationException>(() => builder.With(new Health()));
 		}
+
+		[Test]
+		public void With_AfterBuild_Throws()
+		{
+			ActorBuilder builder = _world.BuildActor();
+			builder.Build();
+
+			Assert.Throws<System.InvalidOperationException>(() => builder.With(new Health()));
+		}
+
+		[Test]
+		public void Build_Twice_Throws()
+		{
+			ActorBuilder builder = _world.BuildActor().With(new Health());
+			builder.Build();
+
+			Assert.Throws<System.InvalidOperationException>(() => builder.Build());
+		}
+
+		[Test]
+		public void With_AfterActorDestroyed_Throws()
+		{
+			ActorBuilder builder = _world.BuildActor();
+			builder.Actor.Destroy();
+
+			Assert.Throws<System.InvalidOperationException>(() => builder.With(new Health()));
+			Assert.That(_world.GetPool<Health>().Count, Is.EqualTo(0));
+		}
 	}
 }

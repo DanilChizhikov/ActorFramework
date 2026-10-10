@@ -158,5 +158,56 @@ namespace DTech.ActorFramework.Tests.EditorMode
 
 			world.Dispose();
 		}
+
+		[Test]
+		public void Dispose_FromInsideSystemUpdate_Throws()
+		{
+			ActorWorld world = new();
+			world.AddSystem(new WorldDisposingSystem());
+			world.Initialize();
+
+			Assert.Throws<InvalidOperationException>(() => world.Update(1f));
+			Assert.That(world.IsDisposed, Is.False);
+
+			world.Dispose();
+		}
+
+		[Test]
+		public void CreateActor_FromDestroyHandlerDuringDispose_Throws()
+		{
+			ActorWorld world = new();
+			world.Initialize();
+			world.CreateActor();
+			world.OnActorDestroyed += destroyed => world.CreateActor();
+
+			Assert.Throws<ObjectDisposedException>(() => world.Dispose());
+			Assert.That(world.IsDisposed, Is.True);
+			Assert.That(world.ActorCount, Is.EqualTo(0));
+		}
+
+		[Test]
+		public void Dispose_WhenSystemDisposeThrows_StillDisposesWorld()
+		{
+			List<string> journal = new();
+			ActorWorld world = new();
+			world.AddSystem(new RecordingSystem(journal, "first"));
+			world.AddSystem(new ThrowingDisposeSystem());
+			world.Initialize();
+			Actor actor = world.CreateActor();
+
+			Assert.Throws<InvalidOperationException>(() => world.Dispose());
+			Assert.That(journal, Does.Contain("first:dispose"));
+			Assert.That(actor.IsAlive, Is.False);
+			Assert.That(world.IsDisposed, Is.True);
+		}
+
+		[Test]
+		public void GetPool_AfterDispose_Throws()
+		{
+			ActorWorld world = new();
+			world.Dispose();
+
+			Assert.Throws<ObjectDisposedException>(() => world.GetPool<Health>());
+		}
 	}
 }

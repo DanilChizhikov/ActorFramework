@@ -25,7 +25,7 @@ namespace DTech.ActorFramework
 			for (int i = query.Count - 1; i >= 0; i--)
 			{
 				Actor actor = query.GetActorAt(i);
-				if (!actor.IsAlive)
+				if (!query.IsMatching(actor))
 				{
 					continue;
 				}

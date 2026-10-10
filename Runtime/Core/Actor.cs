@@ -22,6 +22,7 @@ namespace DTech.ActorFramework
 		private bool _isAlive;
 		private bool _isActive;
 		private bool _isArmed;
+		private bool _isDefaultActive = true;
 
 		public ActorWorld World => _world;
 		public int Id => _id;
@@ -34,6 +35,8 @@ namespace DTech.ActorFramework
 		internal ref FeatureMask Mask => ref _mask;
 
 		internal bool IsQueryDirty { get; set; }
+
+		internal bool IsArmed => _isArmed;
 
 		internal Actor(ActorWorld world, int id)
 		{
@@ -111,6 +114,14 @@ namespace DTech.ActorFramework
 		{
 			_ = token ?? throw new ArgumentNullException(nameof(token));
 			ThrowIfNotAlive();
+
+			if (_isDefaultActive)
+			{
+				throw new InvalidOperationException(
+					$"Actor '{_id}' is active by default and only accepts deactivators. " +
+					$"Build it with {nameof(ActorBuilder)}.{nameof(ActorBuilder.StartInactive)} to drive it by activators.");
+			}
+
 			EnsureActivationState().AddActivator(token);
 		}
 
@@ -175,9 +186,11 @@ namespace DTech.ActorFramework
 				_activation.Arm();
 				return;
 			}
-			
-			SetActive(true);
+
+			SetActive(_isDefaultActive);
 		}
+
+		internal void SetDefaultInactive() => _isDefaultActive = false;
 
 		internal void IncrementFeatureCount() => _featureCount++;
 
@@ -214,7 +227,7 @@ namespace DTech.ActorFramework
 				return _activation;
 			}
 
-			_activation = new ActivationState();
+			_activation = new ActivationState(_isDefaultActive, _isActive);
 
 			_activation.OnActivated += ActivationActivatedHandler;
 			_activation.OnDeactivated += ActivationDeactivatedHandler;

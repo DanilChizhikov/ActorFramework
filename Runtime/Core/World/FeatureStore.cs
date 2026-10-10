@@ -71,7 +71,7 @@ namespace DTech.ActorFramework
 		public ref TFeature Add<TFeature>(Actor actor, TFeature value)
 			where TFeature : struct, IActorFeature
 		{
-			_world.ThrowIfDisposed();
+			_world.ThrowIfNotAcceptingChanges();
 
 			int typeId = FeatureType<TFeature>.Id;
 			ref FeatureMask mask = ref actor.Mask;
@@ -150,6 +150,8 @@ namespace DTech.ActorFramework
 		public void AddSilent<TFeature>(Actor actor, in TFeature value)
 			where TFeature : struct, IActorFeature
 		{
+			_world.ThrowIfNotBuildable(actor);
+
 			int typeId = FeatureType<TFeature>.Id;
 			ref FeatureMask mask = ref actor.Mask;
 			if (mask.Has(typeId))

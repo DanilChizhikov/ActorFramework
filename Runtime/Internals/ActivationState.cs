@@ -10,7 +10,8 @@ namespace DTech.ActorFramework
 
 		private readonly HashSet<object> _activators = new(ReferenceComparer.Instance);
 		private readonly HashSet<object> _deactivators = new(ReferenceComparer.Instance);
-		
+		private readonly bool _isDefaultActive;
+
 		public bool IsActive { get; private set; }
 		public bool IsArmed { get; private set; }
 		public int DeactivatorCount => _deactivators.Count;
@@ -18,6 +19,12 @@ namespace DTech.ActorFramework
 		
 		private bool _isEvaluating;
 		private bool _isEvaluationPending;
+
+		public ActivationState(bool isDefaultActive, bool isActive)
+		{
+			_isDefaultActive = isDefaultActive;
+			IsActive = isActive;
+		}
 
 		public void Arm()
 		{
@@ -144,7 +151,7 @@ namespace DTech.ActorFramework
 				{
 					_isEvaluationPending = false;
 
-					bool nextState = _deactivators.Count == 0 && _activators.Count > 0;
+					bool nextState = _deactivators.Count == 0 && (_isDefaultActive || _activators.Count > 0);
 					if (nextState != IsActive)
 					{
 						IsActive = nextState;

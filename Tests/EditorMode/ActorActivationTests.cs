@@ -125,5 +125,72 @@ namespace DTech.ActorFramework.Tests.EditorMode
 			Assert.That(actor.ContainsDeactivator(_tokenA), Is.False);
 			Assert.That(actor.DeactivatorCount, Is.EqualTo(0));
 		}
+
+		[Test]
+		public void StartInactive_IsInactiveUntilActivator()
+		{
+			Actor actor = _world.BuildActor().StartInactive().Build();
+
+			Assert.That(actor.IsActive, Is.False);
+
+			actor.AddActivator(_tokenA);
+
+			Assert.That(actor.IsActive, Is.True);
+		}
+
+		[Test]
+		public void StartInactive_RemoveLastActivator_Deactivates()
+		{
+			Actor actor = _world.BuildActor().StartInactive().Build();
+			actor.AddActivator(_tokenA);
+			actor.AddActivator(_tokenB);
+
+			actor.RemoveActivator(_tokenA);
+
+			Assert.That(actor.IsActive, Is.True, "A remaining activator must keep the actor active.");
+
+			actor.RemoveActivator(_tokenB);
+
+			Assert.That(actor.IsActive, Is.False);
+		}
+
+		[Test]
+		public void StartInactive_DeactivatorVetoesActivator()
+		{
+			Actor actor = _world.BuildActor().StartInactive().Build();
+			actor.AddActivator(_tokenA);
+
+			actor.AddDeactivator(_tokenB);
+
+			Assert.That(actor.IsActive, Is.False);
+
+			actor.RemoveDeactivator(_tokenB);
+
+			Assert.That(actor.IsActive, Is.True);
+		}
+
+		[Test]
+		public void DeactivatorAddedBeforeBuild_KeepsActorInactiveUntilRemoved()
+		{
+			ActorBuilder builder = _world.BuildActor();
+			builder.Actor.AddDeactivator(_tokenA);
+
+			Actor actor = builder.Build();
+
+			Assert.That(actor.IsActive, Is.False);
+
+			actor.RemoveDeactivator(_tokenA);
+
+			Assert.That(actor.IsActive, Is.True);
+		}
+
+		[Test]
+		public void StartInactive_AfterBuild_Throws()
+		{
+			ActorBuilder builder = _world.BuildActor();
+			builder.Build();
+
+			Assert.Throws<InvalidOperationException>(() => builder.StartInactive());
+		}
 	}
 }
