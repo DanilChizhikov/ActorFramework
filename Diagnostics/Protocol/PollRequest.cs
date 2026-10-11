@@ -4,13 +4,13 @@ namespace DTech.ActorFramework.Diagnostics
 {
 	internal sealed class PollRequest
 	{
-		public const int NONE = -1;
+		public const int None = -1;
 
-		public int WorldId { get; set; } = NONE;
-		public int KnownVersion { get; set; } = NONE;
+		public int WorldId { get; set; } = None;
+		public int KnownVersion { get; set; } = None;
 		public int KnownTypeCount { get; set; }
-		public int QueryIndex { get; set; } = NONE;
-		public int SelectedActorId { get; set; } = NONE;
+		public int QueryIndex { get; set; } = None;
+		public int SelectedActorId { get; set; } = None;
 
 		public static void Write(PollRequest request, BinaryWriter writer)
 		{

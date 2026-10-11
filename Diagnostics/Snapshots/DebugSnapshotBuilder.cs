@@ -33,7 +33,7 @@ namespace DTech.ActorFramework.Diagnostics
 				}
 
 				response.World = BuildWorld(world, request);
-				if (request.SelectedActorId != PollRequest.NONE)
+				if (request.SelectedActorId != PollRequest.None)
 				{
 					response.Actor = BuildActor(world, request.SelectedActorId);
 				}

@@ -1,0 +1,21 @@
+{
+    "name": "com.dtech.actor-framework.editor",
+    "rootNamespace": "DTech",
+    "references": [
+        "GUID:c924be4cbeb34bc68d710cf5205d783b",
+        "GUID:5e4cad807119453291b0f0a3a1e163e0"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [
+        "!DTECH_ACTOR_DEBUGGER_DISABLED"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
