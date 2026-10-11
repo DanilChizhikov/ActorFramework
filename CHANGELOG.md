@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.0.1] - 2026-10-11
+
+### Fixed
+- Opening the Actor Debugger window threw `ArgumentException: Could not register callback PollResponseHandler`: `EditorConnection.Register` needs a `UnityEngine.Object` callback target, so player responses now go through an internal hidden `ScriptableObject` receiver
+
 ## [1.0.0] - 2026-10-11
 
 Initial release.
