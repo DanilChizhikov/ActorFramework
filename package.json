@@ -1,10 +1,10 @@
 {
     "name": "com.dtech.actor-framework",
     "displayName": "Actor Framework",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "unity": "6000.0",
     "description": "ECS-like actor framework for Unity: struct features in sparse-set pools, cached queries, Update / FixedUpdate / LateUpdate systems and an Actor Debugger window for the Editor and Development Builds.",
-    "changelogUrl": "https://github.com/DanilChizhikov/ActorFramework/releases/tag/v1.0.0",
+    "changelogUrl": "https://github.com/DanilChizhikov/ActorFramework/releases/tag/v1.0.1",
     "documentationUrl": "https://github.com/DanilChizhikov/ActorFramework/",
     "keywords": [
         "actor",
