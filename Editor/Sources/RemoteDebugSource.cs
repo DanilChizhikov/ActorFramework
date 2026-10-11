@@ -29,19 +29,21 @@ namespace DTech.ActorFramework.Editor
 			_receiver = ScriptableObject.CreateInstance<PlayerMessageReceiver>();
 			_receiver.hideFlags = HideFlags.HideAndDontSave;
 			_receiver.OnMessage += PollResponseHandler;
+			_receiver.OnDisconnected += DisconnectionHandler;
 
 			EditorConnection connection = EditorConnection.instance;
 			connection.Initialize();
 			connection.Register(DebugMessageIds.PollResponse, _receiver.Receive);
-			connection.RegisterDisconnection(DisconnectionHandler);
+			connection.RegisterDisconnection(_receiver.Disconnect);
 		}
 
 		public void Dispose()
 		{
 			EditorConnection connection = EditorConnection.instance;
 			connection.Unregister(DebugMessageIds.PollResponse, _receiver.Receive);
-			connection.UnregisterDisconnection(DisconnectionHandler);
+			connection.UnregisterDisconnection(_receiver.Disconnect);
 			_receiver.OnMessage -= PollResponseHandler;
+			_receiver.OnDisconnected -= DisconnectionHandler;
 			UnityEngine.Object.DestroyImmediate(_receiver);
 			OnResponse = null;
 		}
