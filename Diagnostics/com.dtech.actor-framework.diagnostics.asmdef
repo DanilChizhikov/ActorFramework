@@ -1,0 +1,19 @@
+{
+    "name": "com.dtech.actor-framework.diagnostics",
+    "rootNamespace": "DTech",
+    "references": [
+        "GUID:c924be4cbeb34bc68d710cf5205d783b"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [
+        "UNITY_EDITOR || DEVELOPMENT_BUILD",
+        "!DTECH_ACTOR_DEBUGGER_DISABLED"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
