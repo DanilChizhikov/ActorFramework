@@ -20,21 +20,29 @@ namespace DTech.ActorFramework.Editor
 			EditorApplication.timeSinceStartup - _requestTime < ResponseTimeoutSeconds;
 		public int PollIntervalMs => PollIntervalMS;
 
+		private readonly PlayerMessageReceiver _receiver;
+
 		private double _requestTime = NoRequest;
 
 		public RemoteDebugSource()
 		{
+			_receiver = ScriptableObject.CreateInstance<PlayerMessageReceiver>();
+			_receiver.hideFlags = HideFlags.HideAndDontSave;
+			_receiver.OnMessage += PollResponseHandler;
+
 			EditorConnection connection = EditorConnection.instance;
 			connection.Initialize();
-			connection.Register(DebugMessageIds.PollResponse, PollResponseHandler);
+			connection.Register(DebugMessageIds.PollResponse, _receiver.Receive);
 			connection.RegisterDisconnection(DisconnectionHandler);
 		}
 
 		public void Dispose()
 		{
 			EditorConnection connection = EditorConnection.instance;
-			connection.Unregister(DebugMessageIds.PollResponse, PollResponseHandler);
+			connection.Unregister(DebugMessageIds.PollResponse, _receiver.Receive);
 			connection.UnregisterDisconnection(DisconnectionHandler);
+			_receiver.OnMessage -= PollResponseHandler;
+			UnityEngine.Object.DestroyImmediate(_receiver);
 			OnResponse = null;
 		}
 
