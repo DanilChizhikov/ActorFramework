@@ -4,22 +4,24 @@ namespace DTech.ActorFramework
 {
 	internal sealed class StructuralChangeQueue
 	{
-		private const int DEFAULT_CAPACITY = 32;
-		private const int MAX_FLUSH_PASSES = 64;
+		private const int DefaultCapacity = 32;
+		private const int MaxFlushPasses = 64;
 
 		private readonly ActorWorld _world;
 		private readonly ActorRegistry _actors;
 		private readonly QueryRegistry _queries;
 
 		public bool IsInScope => _depth > 0;
+		public int Version => _version;
 
-		private int[] _dirtyActorIds = new int[DEFAULT_CAPACITY];
-		private int[] _dirtyScratch = new int[DEFAULT_CAPACITY];
-		private int[] _pendingDestroyIds = new int[DEFAULT_CAPACITY];
-		private int[] _pendingDestroyScratch = new int[DEFAULT_CAPACITY];
+		private int[] _dirtyActorIds = new int[DefaultCapacity];
+		private int[] _dirtyScratch = new int[DefaultCapacity];
+		private int[] _pendingDestroyIds = new int[DefaultCapacity];
+		private int[] _pendingDestroyScratch = new int[DefaultCapacity];
 		private int _dirtyCount;
 		private int _pendingDestroyCount;
 		private int _depth;
+		private int _version;
 		private bool _isFlushing;
 
 		public StructuralChangeQueue(ActorWorld world, ActorRegistry actors, QueryRegistry queries)
@@ -87,6 +89,7 @@ namespace DTech.ActorFramework
 			}
 
 			_isFlushing = true;
+			_version++;
 			_depth++;
 			try
 			{
@@ -94,10 +97,10 @@ namespace DTech.ActorFramework
 				while (_pendingDestroyCount > 0 || _dirtyCount > 0)
 				{
 					passCount++;
-					if (passCount > MAX_FLUSH_PASSES)
+					if (passCount > MaxFlushPasses)
 					{
 						throw new InvalidOperationException(
-							$"Structural changes did not converge after {MAX_FLUSH_PASSES} passes. " +
+							$"Structural changes did not converge after {MaxFlushPasses} passes. " +
 							"A listener is most likely dirtying actors from inside a structural event.");
 					}
 

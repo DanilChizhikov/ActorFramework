@@ -5,14 +5,14 @@ namespace DTech.ActorFramework
 {
 	internal sealed class ActorRegistry
 	{
-		private const int DEFAULT_CAPACITY = 64;
+		private const int DefaultCapacity = 64;
 
 		private readonly Stack<int> _freeIds = new();
 
 		public int Count => _count;
 		public int Capacity => _actorsById.Length;
 
-		private Actor[] _actorsById = new Actor[DEFAULT_CAPACITY];
+		private Actor[] _actorsById = new Actor[DefaultCapacity];
 		private int _nextId;
 		private int _count;
 

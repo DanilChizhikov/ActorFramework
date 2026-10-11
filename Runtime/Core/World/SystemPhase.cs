@@ -6,11 +6,11 @@ namespace DTech.ActorFramework
 	internal sealed class SystemPhase<TSystem>
 		where TSystem : class
 	{
-		private const int NOT_RUNNING = -1;
+		private const int NotRunning = -1;
 
 		private readonly List<TSystem> _systems = new();
 
-		private int _cursor = NOT_RUNNING;
+		private int _cursor = NotRunning;
 		private int _end;
 
 		public void Add(TSystem system) => _systems.Add(system);
@@ -25,7 +25,7 @@ namespace DTech.ActorFramework
 
 			_systems.RemoveAt(index);
 
-			if (_cursor == NOT_RUNNING)
+			if (_cursor == NotRunning)
 			{
 				return;
 			}
@@ -43,7 +43,7 @@ namespace DTech.ActorFramework
 
 		public void Run(Action<TSystem, float> invoke, float deltaTime, StructuralChangeQueue structural)
 		{
-			if (_cursor != NOT_RUNNING)
+			if (_cursor != NotRunning)
 			{
 				throw new InvalidOperationException(
 					$"Systems of '{typeof(TSystem).Name}' are already running. An update phase cannot be re-entered.");
@@ -68,7 +68,7 @@ namespace DTech.ActorFramework
 			}
 			finally
 			{
-				_cursor = NOT_RUNNING;
+				_cursor = NotRunning;
 			}
 		}
 

@@ -76,6 +76,8 @@ namespace DTech.ActorFramework
 			return true;
 		}
 
+		public IActorSystem GetAt(int index) => _systems[index];
+
 		public void InitializeAll(ActorWorld world)
 		{
 			for (int i = 0; i < _systems.Count; i++)

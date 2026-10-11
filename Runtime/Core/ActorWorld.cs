@@ -1,5 +1,6 @@
 using System;
 using System.Runtime.ExceptionServices;
+using System.Threading;
 
 namespace DTech.ActorFramework
 {
@@ -19,7 +20,10 @@ namespace DTech.ActorFramework
 		private readonly StructuralChangeQueue _structural;
 		private readonly FeatureStore _features;
 		private readonly SystemRegistry _systems;
+		private readonly string _name;
+		private readonly int _debugId;
 
+		public string Name => _name;
 		public Phase Phase => _phase;
 		public int ActorCount => _actors.Count;
 		public int SystemCount => _systems.Count;
@@ -27,19 +31,37 @@ namespace DTech.ActorFramework
 		public bool IsInitialized => _phase == Phase.Initialized;
 		public bool IsDisposed => _phase == Phase.Disposed;
 
+		private static int _createdWorldCount;
+
 		private Phase _phase = Phase.Created;
 		private bool _isDisposing;
 
 		internal FeatureStore Features => _features;
 		internal StructuralChangeQueue Structural => _structural;
+		internal SystemRegistry Systems => _systems;
+		internal QueryRegistry Queries => _queries;
+		internal int DebugId => _debugId;
+		internal int StructureVersion => _structural.Version;
 
-		public ActorWorld()
+		public ActorWorld() : this(null)
 		{
+		}
+
+		/// <summary>
+		/// Creates a world with a display name used by logs and the Actor Debugger window.
+		/// </summary>
+		/// <param name="name">Display name. Null or empty gets "ActorWorld #N".</param>
+		public ActorWorld(string name)
+		{
+			_debugId = Interlocked.Increment(ref _createdWorldCount);
+			_name = string.IsNullOrEmpty(name) ? $"{nameof(ActorWorld)} #{_debugId}" : name;
 			_actors = new ActorRegistry();
 			_queries = new QueryRegistry(_actors);
 			_structural = new StructuralChangeQueue(this, _actors, _queries);
 			_features = new FeatureStore(this, _actors, _structural);
 			_systems = new SystemRegistry(_structural);
+
+			ActorWorldTracker.Register(this);
 		}
 
 		public void Dispose()
@@ -76,6 +98,7 @@ namespace DTech.ActorFramework
 
 				_phase = Phase.Disposed;
 				_isDisposing = false;
+				ActorWorldTracker.Unregister(this);
 
 				OnActorCreated = null;
 				OnActorDestroying = null;
@@ -236,6 +259,8 @@ namespace DTech.ActorFramework
 			ThrowIfNotRunnable();
 			_systems.LateUpdate(deltaTime);
 		}
+
+		public override string ToString() => _name;
 
 		internal ActorQuery GetOrCreateQuery(in ActorQueryKey key)
 		{

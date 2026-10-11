@@ -8,8 +8,8 @@ namespace DTech.ActorFramework
 	/// </summary>
 	public sealed class ActorQuery
 	{
-		private const int NONE = -1;
-		private const int MIN_CAPACITY = 8;
+		private const int DefaultNone = -1;
+		private const int MinCapacity = 8;
 
 		private readonly FeatureMask _all;
 		private readonly FeatureMask _any;
@@ -24,6 +24,11 @@ namespace DTech.ActorFramework
 		public int Count => _count;
 		public bool IncludeInactive => _includeInactive;
 
+		internal FeatureMask All => _all;
+		internal FeatureMask Any => _any;
+		internal FeatureMask None => _none;
+		internal bool HasAny => _hasAny;
+
 		internal ActorQuery(in ActorQueryKey key, int actorCapacity)
 		{
 			_all = key.All;
@@ -32,7 +37,7 @@ namespace DTech.ActorFramework
 			_hasAny = key.HasAny;
 			_includeInactive = key.IncludeInactive;
 			_sparse = new int[actorCapacity < 1 ? 1 : actorCapacity];
-			_actors = new Actor[MIN_CAPACITY];
+			_actors = new Actor[MinCapacity];
 			_count = 0;
 
 			FillSparse(0, _sparse.Length);
@@ -71,7 +76,7 @@ namespace DTech.ActorFramework
 
 			int index = _sparse[actorId];
 
-			return index != NONE && ReferenceEquals(_actors[index], actor);
+			return index != DefaultNone && ReferenceEquals(_actors[index], actor);
 		}
 
 		/// <summary>
@@ -105,7 +110,7 @@ namespace DTech.ActorFramework
 			}
 
 			int index = _sparse[actorId];
-			if (index == NONE)
+			if (index == DefaultNone)
 			{
 				return;
 			}
@@ -119,7 +124,7 @@ namespace DTech.ActorFramework
 			}
 
 			_actors[lastIndex] = null;
-			_sparse[actorId] = NONE;
+			_sparse[actorId] = DefaultNone;
 			_count = lastIndex;
 		}
 
@@ -127,7 +132,7 @@ namespace DTech.ActorFramework
 		{
 			for (int i = 0; i < _count; i++)
 			{
-				_sparse[_actors[i].Id] = NONE;
+				_sparse[_actors[i].Id] = DefaultNone;
 				_actors[i] = null;
 			}
 
@@ -165,7 +170,7 @@ namespace DTech.ActorFramework
 			int actorId = actor.Id;
 			EnsureActorCapacity(actorId);
 
-			if (_sparse[actorId] != NONE)
+			if (_sparse[actorId] != DefaultNone)
 			{
 				return;
 			}
@@ -202,7 +207,7 @@ namespace DTech.ActorFramework
 		{
 			for (int i = startIndex; i < endIndex; i++)
 			{
-				_sparse[i] = NONE;
+				_sparse[i] = DefaultNone;
 			}
 		}
 	}

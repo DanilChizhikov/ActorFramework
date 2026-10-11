@@ -8,5 +8,7 @@ namespace DTech.ActorFramework
 		bool Has(int actorId);
 		bool Remove(int actorId);
 		void Clear();
+		object GetBoxed(int actorId);
+		void SetBoxed(int actorId, object value);
 	}
 }
