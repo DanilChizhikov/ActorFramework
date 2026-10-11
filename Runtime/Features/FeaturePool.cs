@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace DTech.ActorFramework
 {
@@ -9,8 +10,8 @@ namespace DTech.ActorFramework
 	public sealed class FeaturePool<TFeature> : IFeaturePool
 		where TFeature : struct, IActorFeature
 	{
-		private const int NONE = -1;
-		private const int MIN_DENSE_CAPACITY = 4;
+		private const int None = -1;
+		private const int MinDenseCapacity = 4;
 
 		private int[] _sparse;
 		private int[] _denseActorIds;
@@ -32,18 +33,18 @@ namespace DTech.ActorFramework
 		/// </summary>
 		public int[] ActorIds => _denseActorIds;
 
-		internal FeaturePool(int typeId, int actorCapacity, int denseCapacity = MIN_DENSE_CAPACITY)
+		internal FeaturePool(int typeId, int actorCapacity, int denseCapacity = MinDenseCapacity)
 		{
 			TypeId = typeId;
 			_sparse = new int[actorCapacity < 1 ? 1 : actorCapacity];
-			_denseActorIds = new int[denseCapacity < MIN_DENSE_CAPACITY ? MIN_DENSE_CAPACITY : denseCapacity];
+			_denseActorIds = new int[denseCapacity < MinDenseCapacity ? MinDenseCapacity : denseCapacity];
 			_denseValues = new TFeature[_denseActorIds.Length];
 			_count = 0;
 
 			FillSparse(0, _sparse.Length);
 		}
 
-		public bool Has(int actorId) => actorId >= 0 && actorId < _sparse.Length && _sparse[actorId] != NONE;
+		public bool Has(int actorId) => actorId >= 0 && actorId < _sparse.Length && _sparse[actorId] != None;
 
 		/// <summary>
 		/// Reference to the value of actorId. The caller must have checked Has.
@@ -80,7 +81,7 @@ namespace DTech.ActorFramework
 		{
 			EnsureActorCapacity(actorId);
 
-			if (_sparse[actorId] != NONE)
+			if (_sparse[actorId] != None)
 			{
 				throw new InvalidOperationException(
 					$"Actor '{actorId}' already has feature '{typeof(TFeature).Name}'.");
@@ -114,9 +115,9 @@ namespace DTech.ActorFramework
 				_sparse[movedActorId] = denseIndex;
 			}
 			
-			_denseActorIds[lastIndex] = NONE;
+			_denseActorIds[lastIndex] = None;
 			_denseValues[lastIndex] = default;
-			_sparse[actorId] = NONE;
+			_sparse[actorId] = None;
 			_count = lastIndex;
 
 			return true;
@@ -159,8 +160,8 @@ namespace DTech.ActorFramework
 		{
 			for (int i = 0; i < _count; i++)
 			{
-				_sparse[_denseActorIds[i]] = NONE;
-				_denseActorIds[i] = NONE;
+				_sparse[_denseActorIds[i]] = None;
+				_denseActorIds[i] = None;
 				_denseValues[i] = default;
 			}
 
@@ -177,8 +178,18 @@ namespace DTech.ActorFramework
 		{
 			for (int i = startIndex; i < endIndex; i++)
 			{
-				_sparse[i] = NONE;
+				_sparse[i] = None;
 			}
+		}
+
+		private void ThrowIfMissing(int actorId)
+		{
+			if (Has(actorId))
+			{
+				return;
+			}
+
+			throw new KeyNotFoundException($"Actor '{actorId}' has no feature '{typeof(TFeature).Name}'.");
 		}
 
 		bool IFeaturePool.Has(int actorId) => Has(actorId);
@@ -186,5 +197,19 @@ namespace DTech.ActorFramework
 		bool IFeaturePool.Remove(int actorId) => Remove(actorId);
 
 		void IFeaturePool.Clear() => Clear();
+
+		object IFeaturePool.GetBoxed(int actorId)
+		{
+			ThrowIfMissing(actorId);
+
+			return GetUnchecked(actorId);
+		}
+
+		void IFeaturePool.SetBoxed(int actorId, object value)
+		{
+			ThrowIfMissing(actorId);
+
+			GetUnchecked(actorId) = (TFeature)value;
+		}
 	}
 }

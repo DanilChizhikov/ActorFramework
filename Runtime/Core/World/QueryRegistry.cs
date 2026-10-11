@@ -39,6 +39,8 @@ namespace DTech.ActorFramework
 			return query;
 		}
 
+		public ActorQuery GetAt(int index) => _queries[index];
+
 		public void Sync(Actor actor)
 		{
 			for (int i = 0; i < _queries.Count; i++)

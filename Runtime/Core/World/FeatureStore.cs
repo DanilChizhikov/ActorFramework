@@ -5,7 +5,7 @@ namespace DTech.ActorFramework
 {
 	internal sealed class FeatureStore
 	{
-		private const int DEFAULT_POOL_CAPACITY = 16;
+		private const int DefaultPoolCapacity = 16;
 
 		private readonly ActorWorld _world;
 		private readonly ActorRegistry _actors;
@@ -13,7 +13,7 @@ namespace DTech.ActorFramework
 
 		public int PoolCapacity => _pools.Length;
 
-		private IFeaturePool[] _pools = new IFeaturePool[DEFAULT_POOL_CAPACITY];
+		private IFeaturePool[] _pools = new IFeaturePool[DefaultPoolCapacity];
 
 		public FeatureStore(ActorWorld world, ActorRegistry actors, StructuralChangeQueue structural)
 		{
@@ -38,6 +38,13 @@ namespace DTech.ActorFramework
 			_pools[typeId] = created;
 
 			return created;
+		}
+
+		public bool TryGetPool(int typeId, out IFeaturePool pool)
+		{
+			pool = typeId >= 0 && typeId < _pools.Length ? _pools[typeId] : null;
+
+			return pool != null;
 		}
 
 		public ref TFeature Get<TFeature>(Actor actor)
